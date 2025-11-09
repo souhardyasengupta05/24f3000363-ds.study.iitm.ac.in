@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
 
       # Identifier step required by task
-      - name: matrix-a8a6c0e
+      - name: matrix-455fec7
         run: echo "Building for Node.js version ${{ matrix.node-version }}"
 
       - name: Setup Node.js
@@ -36,5 +36,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-a8a6c0e-v${{ matrix.node-version }}
+          name:  build-455fec7-v${{ matrix.node-version }}
           path: build_output.txt
