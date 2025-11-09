@@ -1,95 +1,41 @@
-name: Multi-Platform Matrix Build
+name: Matrix Build with Artifacts
 
 on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    name: Matrix Build (Node)
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            node-version: '18'
-            python-version: '3.11'
-            build-config: 'production'
-          - os: macos-latest
-            node-version: '20'
-            python-version: '3.12'
-            build-config: 'development'
-          - os: windows-latest
-            node-version: '22'
-            python-version: '3.13'
-            build-config: 'staging'
-    
+        node-version: [14, 16, 18]  # 3 matrix variants
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: matrix-455fec7
-      run: |
-        echo "Building for OS: ${{ matrix.os }}"
-        echo "Node.js version: ${{ matrix.node-version }}"
-        echo "Python version: ${{ matrix.python-version }}"
-        echo "Build config: ${{ matrix.build-config }}"
+      # Identifier step required by task
+      - name: matrix-455fec7
+        run: echo "Building for Node.js version ${{ matrix.node-version }}"
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Generate build artifact
+        run: |
+          echo "This is the build artifact for Node.js version ${{ matrix.node-version }}" > build_output.txt
+          echo "Generated on $(date)" >> build_output.txt
+          echo "Matrix variant: ${{ matrix.node-version }}" >> build_output.txt
+          echo "Build ID: 455fec7" >> build_output.txt
 
-    - name: Generate build artifact
-      run: |
-        # Create a unique build artifact for each matrix variant
-        cat > build-artifact.json << EOF
-        {
-          "build_id": "455fec7",
-          "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-          "platform": {
-            "os": "${{ matrix.os }}",
-            "node_version": "${{ matrix.node-version }}",
-            "python_version": "${{ matrix.python-version }}"
-          },
-          "configuration": "${{ matrix.build-config }}",
-          "artifacts": [
-            "main-bundle.js",
-            "config-${{ matrix.build-config }}.json",
-            "dependencies-lock.json"
-          ],
-          "build_metrics": {
-            "processing_time_ms": $((1000 + RANDOM % 5000)),
-            "memory_usage_mb": $((200 + RANDOM % 800)),
-            "bundle_size_kb": $((500 + RANDOM % 2000))
-          }
-        }
-        EOF
-        
-        # Create additional build output files
-        echo "Build completed successfully for ${{ matrix.os }} with Node ${{ matrix.node-version }}" > build-output.txt
-        echo "Configuration: ${{ matrix.build-config }}" >> build-output.txt
-        echo "Build signature: 455fec7-${{ matrix.os }}-node${{ matrix.node-version }}-py${{ matrix.python-version }}" >> build-output.txt
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-455fec7-${{ matrix.os }}-node${{ matrix.node-version }}-py${{ matrix.python-version }}
-        path: |
-          build-artifact.json
-          build-output.txt
-        retention-days: 7
-
-    - name: Verify artifact content
-      run: |
-        echo "Verifying generated artifacts..."
-        [ -s build-artifact.json ] || exit 1
-        [ -s build-output.txt ] || exit 1
-        echo "✓ All artifacts contain actual content"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-455fec7-v${{ matrix.node-version }}
+          path: build_output.txt
